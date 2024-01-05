@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/swcrc",
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "tsx": false,
+      "decorators": true,
+      "dynamicImport": false
+    },
+    "transform": {
+      "useDefineForClassFields": false
+    },
+    "externalHelpers": true,
+    "target": "es5",
+    "loose": true
+  },
+  "module": {
+    "type": "es6"
+  },
+  "minify": false
+}
