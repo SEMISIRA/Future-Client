@@ -15,5 +15,22 @@
     "sourceType": "module",
     "project": "tsconfig.json"
   },
-  "rules": {}
+  "rules": {
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "type",
+          "index",
+          "sibling",
+          "parent",
+          "internal",
+          "builtin",
+          "external",
+          "object"
+        ]
+      }
+    ],
+    "no-case-declarations": "off"
+  }
 }
