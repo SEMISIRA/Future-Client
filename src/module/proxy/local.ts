@@ -1,22 +1,17 @@
 import { type Side, type Message } from './shared.js'
-import { type AsyncVoid, EventHandler } from '../../util/events.js'
+import { PublicEventHandler } from '../../util/events.js'
 import { createChannel } from '../../worker/parent.js'
 import { Packet, type RawPacket } from '../../util/packet.js'
+import { type AsyncVoid } from '../../util/types.js'
 
-export type EventMap = Record<string, (packet: Packet) => AsyncVoid>
-
-export class EventEmitter extends EventHandler<EventMap> {
-  public async emit (name: string, packet: Packet): Promise<void> {
-    await this._emit(name, packet)
-  }
-}
+export type PacketEventMap = Record<string, (packet: Packet) => AsyncVoid>
 
 // ? Should I export the channel
 export const channel = createChannel<Message>('proxy')
 
 export class Proxy {
-  public readonly client = new EventEmitter()
-  public readonly server = new EventEmitter()
+  public readonly client = new PublicEventHandler<PacketEventMap>()
+  public readonly server = new PublicEventHandler<PacketEventMap>()
 
   constructor () {
     channel.subscribe(({ side, packet: raw }: Message) => {
@@ -65,4 +60,6 @@ export class Proxy {
   }
 }
 
-export default new Proxy()
+export const proxy = new Proxy()
+
+export default proxy

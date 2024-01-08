@@ -1,4 +1,4 @@
-export type AsyncVoid = void | Promise<void>
+import { type AsyncVoid } from './types.js'
 
 export type EventMap<T> = { [K in keyof T]: (...args: any[]) => AsyncVoid }
 
@@ -38,5 +38,11 @@ export class EventHandler<T extends EventMap<T>> {
     const map = this.map
 
     map.clear()
+  }
+}
+
+export class PublicEventHandler<T extends EventMap<T>> extends EventHandler<T> {
+  public async emit<E extends keyof T> (name: E, ...data: Parameters<T[E]>): Promise<void> {
+    await this._emit(name, ...data)
   }
 }

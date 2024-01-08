@@ -17,14 +17,14 @@ function postMessage (channel: string, data: any): void {
   })
 }
 
-export function createChannel<T> (id: string): Channel<T> {
-  const channel = new Channel<T>(id)
+export function createChannel<TSend, TReceive = TSend> (id: string): Channel<TSend, TReceive> {
+  const channel = new Channel<TSend, TReceive>(id)
 
   channel._subscribe(message => {
     postMessage(id, message)
   })
 
-  port.on('message', (message: Message<T>) => {
+  port.on('message', (message: Message<TReceive>) => {
     if (message.channel !== id) return
 
     channel._write(message.data)

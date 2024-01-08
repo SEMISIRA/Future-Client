@@ -17,7 +17,7 @@ const MODULE_DIR_PATH = resolve(__dirname, '../module')
 const VERSION = '1.19.4'
 
 export const TARGET_OPTIONS = {
-  host: 'grandma-does.tech',
+  host: 'kaboom.pw',
   port: 25565,
   keepAlive: false,
   username: 'Player137',
@@ -71,14 +71,14 @@ export class Instance {
     } satisfies Message)
   }
 
-  public createChannel<T> (id: string): Channel<T> {
-    const channel = new Channel<T>(id)
+  public createChannel<TSend, TReceive = TSend> (id: string): Channel<TSend, TReceive> {
+    const channel = new Channel<TSend, TReceive>(id)
 
     channel._subscribe(data => {
       this.postMessage(id, data)
     })
 
-    this.worker.on('message', (message: Message<T>) => {
+    this.worker.on('message', (message: Message<TReceive>) => {
       if (message.channel !== id) return
 
       channel._write(message.data)
