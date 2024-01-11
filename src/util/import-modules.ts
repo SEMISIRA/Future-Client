@@ -5,22 +5,46 @@
 // }
 
 import { exists } from './file.js'
+import { type AsyncVoid } from './types.js'
+import { type Dirent } from 'fs'
 import { readdir } from 'fs/promises'
 import { resolve } from 'path'
 
-export async function * importModulesGenerator (directory: string, index: string): AsyncGenerator<unknown> {
+export interface Callbacks {
+  pre?: (entry: Dirent) => AsyncVoid
+  post?: (entry: Dirent) => AsyncVoid
+  error?: (error: Error, entry: Dirent) => AsyncVoid
+}
+
+export async function * importModulesGenerator (directory: string, index: string, callbacks?: Callbacks): AsyncGenerator<unknown> {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = resolve(entry.path, entry.name, index)
 
-    if (!entry.isDirectory()) throw new Error(`Expected ${path} to be a directory`)
+    if (!entry.isDirectory()) console.warn(`Expected ${entry.name} to be a directory (located at ${entry.path})`)
 
     if (!await exists(path)) continue
 
-    yield await import(path)
+    try {
+      const preCallback = callbacks?.pre
+
+      if (preCallback !== undefined) await preCallback(entry)
+
+      yield await import(path)
+
+      const postCallback = callbacks?.post
+
+      if (postCallback !== undefined) await postCallback(entry)
+    } catch (error) {
+      const errorCallback = callbacks?.error
+
+      if (errorCallback === undefined) throw error
+
+      await errorCallback(error as Error, entry)
+    }
   }
 }
 
-export async function importModules (directory: string, index: string): Promise<void> {
+export async function importModules (directory: string, index: string, callbacks?: Callbacks): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  for await (const _ of importModulesGenerator(directory, index));
+  for await (const _ of importModulesGenerator(directory, index, callbacks));
 }

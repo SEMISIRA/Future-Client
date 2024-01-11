@@ -24,6 +24,17 @@ export class EventHandler<T extends EventMap<T>> {
     set.add(callback)
   }
 
+  public once<E extends keyof T>(name: E, callback: T[E]): void {
+    const original = callback
+    callback = function (this: ThisParameterType<T[E]>, ...args: Parameters<T[E]>): ReturnType<T[E]> {
+      const output = original.apply(this, args)
+
+      return output as ReturnType<T[E]>
+    } as unknown as T[E]
+
+    this.on(name, callback)
+  }
+
   public off<E extends keyof T> (name: E, callback: T[E]): void {
     const map = this.map
 

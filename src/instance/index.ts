@@ -1,10 +1,12 @@
 import { type Message } from '../worker/parent.js'
 import { importModulesGenerator } from '../util/import-modules.js'
 import { Channel } from '../util/channel.js'
+import { TARGET_OPTIONS } from '../settings.js'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { Worker } from 'worker_threads'
 import { createClient, type ServerClient } from 'minecraft-protocol'
+import chalk from 'chalk'
 
 if (!('require' in globalThis)) {
   globalThis.__filename = fileURLToPath(import.meta.url)
@@ -14,16 +16,6 @@ if (!('require' in globalThis)) {
 const WORKER_PATH = resolve(__dirname, '../worker')
 const MODULE_DIR_PATH = resolve(__dirname, '../module')
 
-const VERSION = '1.19.4'
-
-export const TARGET_OPTIONS = {
-  host: 'kaboom.pw',
-  port: 25565,
-  keepAlive: false,
-  username: 'Player137',
-  version: VERSION
-}
-
 export class Instance {
   public readonly client
   public readonly server
@@ -32,7 +24,13 @@ export class Instance {
   constructor (client: ServerClient) {
     this.client = client
 
-    const target = createClient(TARGET_OPTIONS)
+    const target = createClient({
+      auth: 'offline',
+      username: client.username,
+      ...TARGET_OPTIONS,
+      keepAlive: false
+    })
+
     this.server = target
 
     target.on('error', error => {
@@ -50,7 +48,39 @@ export class Instance {
   }
 
   private async _importModules (): Promise<void> {
-    for await (const module of importModulesGenerator(MODULE_DIR_PATH, 'global.js')) {
+    console.group('Loading modules... (global)')
+
+    const start = performance.now()
+
+    let moduleStart = NaN
+
+    for await (const module of importModulesGenerator(
+      MODULE_DIR_PATH,
+      'global.js',
+      {
+        pre (entry) {
+          const now = performance.now()
+          moduleStart = now
+
+          const module = entry.name
+          console.group(`Loading ${module}...`)
+        },
+        post (entry) {
+          const now = performance.now()
+          const delta = now - moduleStart
+
+          console.groupEnd()
+          console.info(`took ${delta.toPrecision(2)}ms`)
+        },
+        error (error, entry) {
+          const module = entry.name
+
+          error.stack += `\n    while loading module ${JSON.stringify(module)} (local)`
+
+          console.error(chalk.red(error.stack))
+        }
+      }
+    )) {
       if (module === null) throw new Error('Expected module not to be null')
       if (typeof module !== 'object') throw new Error('Expected module to be an object')
 
@@ -62,6 +92,13 @@ export class Instance {
 
       await (f as (instance: Instance) => Promise<void>)(this)
     }
+
+    const end = performance.now()
+
+    const delta = end - start
+
+    console.groupEnd()
+    console.info(`took ${delta.toFixed(2)}ms`)
   }
 
   protected postMessage (channel: string, data: any): void {

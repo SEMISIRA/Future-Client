@@ -8,13 +8,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "scripty",
     "watch:build": "scripty",
+    "copy": "scripty",
+    "watch:copy": "scripty",
     "run": "scripty",
     "watch:run": "scripty",
     "watch": "scripty"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "config": {
     "scripty": {
       "parallel": true,
@@ -37,6 +39,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "chalk": "^5.3.0",
     "minecraft-protocol": "^1.26.5"
   }
 }

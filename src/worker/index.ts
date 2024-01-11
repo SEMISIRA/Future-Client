@@ -1,6 +1,7 @@
 import { importModules } from '../util/import-modules.js'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
+import chalk from 'chalk'
 
 if (!('require' in globalThis)) {
   globalThis.__filename = fileURLToPath(import.meta.url)
@@ -9,4 +10,43 @@ if (!('require' in globalThis)) {
 
 const MODULE_DIR_PATH = resolve(__dirname, '../module')
 
-await importModules(MODULE_DIR_PATH, 'local.js')
+console.group('Loading modules... (local)')
+
+const start = performance.now()
+
+let moduleStart = NaN
+
+await importModules(
+  MODULE_DIR_PATH,
+  'local.js',
+  {
+    pre (entry) {
+      const module = entry.name
+      console.group(`Loading ${module}...`)
+
+      const now = performance.now()
+      moduleStart = now
+    },
+    post (entry) {
+      const now = performance.now()
+      const delta = now - moduleStart
+
+      console.groupEnd()
+      console.info(`took ${delta.toFixed(2)}ms`)
+    },
+    error (error, entry) {
+      const module = entry.name
+
+      error.stack += `\n    while loading module ${JSON.stringify(module)} (local)`
+
+      console.error(chalk.red(error.stack))
+    }
+  }
+)
+
+const end = performance.now()
+
+const delta = end - start
+
+console.groupEnd()
+console.info(`took ${delta.toFixed(2)}ms`)
