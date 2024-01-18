@@ -37,8 +37,20 @@ export class Instance {
       console.error('Target error:', error)
     })
 
+    console.info('Initializing worker... (local context)')
+
+    const start = performance.now()
+
     const worker = new Worker(WORKER_PATH)
     this.worker = worker
+
+    worker.on('online', () => {
+      const end = performance.now()
+
+      const delta = end - start
+
+      console.info(`Worker online! took ${delta.toFixed(2)}ms`)
+    })
 
     worker.on('error', error => {
       console.error('Worker error:', error)

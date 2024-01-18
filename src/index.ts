@@ -12,6 +12,8 @@ export const server = createServer({
 })
 
 server.on('login', client => {
+  console.info(`${client.username} has connected!`)
+
   // eslint-disable-next-line no-new
   new Instance(client)
 })
