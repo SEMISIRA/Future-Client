@@ -16,7 +16,8 @@
   },
   "exclude": [
     "\\.js$",
-    "\\.d\\.ts$"
+    "\\.d\\.ts$",
+    "node_modules"
   ],
   "module": {
     "type": "es6"
