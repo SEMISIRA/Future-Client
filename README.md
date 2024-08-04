@@ -7,6 +7,8 @@
 
 Instead of JavaScript, TypeScript is used which allows for type checking of the code and less bugs.
 
+No more cleint, sever or posiotin!
+
 ## Multi-Threading
 
 For every client that connects a new thread is created.
