@@ -1,43 +1,48 @@
-export type Listener<T> = (data: T) => void
+// ==============================================================
+// # This looks more and more like rx with each day that passes #
+// ==============================================================
+// https://rxjs.dev/
+
+export type Listener<T> = (data: T) => void;
 
 // _x ->  x
 //  x -> _x
 export class Channel<TSend, TReceive = TSend> {
-  public readonly id
+  public readonly id;
 
-  constructor (id: string) {
-    this.id = id
+  constructor(id: string) {
+    this.id = id;
   }
 
-  private readonly listeners = new Set<Listener<TReceive>>()
+  private readonly listeners = new Set<Listener<TReceive>>();
 
-  public subscribe (listener: Listener<TReceive>): void {
-    this.listeners.add(listener)
+  public subscribe(listener: Listener<TReceive>): void {
+    this.listeners.add(listener);
   }
 
-  public unsubscribe (listener: Listener<TReceive>): void {
-    this.listeners.delete(listener)
+  public unsubscribe(listener: Listener<TReceive>): void {
+    this.listeners.delete(listener);
   }
 
-  public write (data: TSend): void {
+  public write(data: TSend): void {
     for (const listener of this._listeners) {
-      listener(data)
+      listener(data);
     }
   }
 
-  private readonly _listeners = new Set<Listener<TSend>>()
+  private readonly _listeners = new Set<Listener<TSend>>();
 
-  public _subscribe (listener: Listener<TSend>): void {
-    this._listeners.add(listener)
+  public _subscribe(listener: Listener<TSend>): void {
+    this._listeners.add(listener);
   }
 
-  public _unsubscribe (listener: Listener<TSend>): void {
-    this._listeners.delete(listener)
+  public _unsubscribe(listener: Listener<TSend>): void {
+    this._listeners.delete(listener);
   }
 
-  public _write (data: TReceive): void {
+  public _write(data: TReceive): void {
     for (const listener of this.listeners) {
-      listener(data)
+      listener(data);
     }
   }
 }

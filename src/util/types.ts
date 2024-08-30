@@ -1,1 +1,1 @@
-export type AsyncVoid = void | Promise<void>
+export type AsyncVoid = void | Promise<void>;

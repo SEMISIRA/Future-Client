@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-swc src -d dist $@
+# --delete-dir-on-start breaks nodemon
+swc src -d dist --strip-leading-paths $@

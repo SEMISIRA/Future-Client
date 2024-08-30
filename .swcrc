@@ -14,11 +14,7 @@
     "target": "esnext",
     "loose": true
   },
-  "exclude": [
-    "\\.js$",
-    "\\.d\\.ts$",
-    "node_modules"
-  ],
+  "exclude": ["\\.js$", "\\.d\\.ts$", "node_modules"],
   "module": {
     "type": "es6"
   },

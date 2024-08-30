@@ -1,60 +1,75 @@
-import { type Side, type Message } from './shared.js'
-import { PublicEventHandler } from '../../util/events.js'
-import { createChannel } from '../../worker/parent.js'
-import { Packet, type RawPacket } from '../../util/packet.js'
-import { type AsyncVoid } from '../../util/types.js'
+import type { States } from 'minecraft-protocol';
+import { states } from 'minecraft-protocol';
 
-export type PacketEventMap = Record<string, (packet: Packet) => AsyncVoid>
+import { PublicEventHandler } from '../../util/events.js';
+import { Packet, type RawPacket } from '../../util/packet.js';
+import { type AsyncVoid } from '../../util/types.js';
+import { createChannel } from '../../worker/parent.js';
+import { type Direction as Direction, type Message } from './shared.js';
+
+export type PacketEventMap = Record<string, (packet: Packet) => AsyncVoid>;
 
 // ? Should I export the channel
-export const channel = createChannel<Message>('proxy')
+export const channel = createChannel<Message>('proxy');
 
-function write (side: Side, packet: RawPacket): void {
+function write(direction: Direction, packet: RawPacket): void {
   channel.write({
-    side,
-    packet
-  })
+    direction,
+    packet,
+  });
 }
 
 export const proxy = {
   client: new PublicEventHandler<PacketEventMap>(),
   server: new PublicEventHandler<PacketEventMap>(),
 
-  writeClient (name: string, data: unknown): void {
-    write('client', { name, data })
+  writeDownstream(
+    name: string,
+    data: unknown,
+    state: States = states.PLAY,
+  ): void {
+    write('downstream', { name, data, state });
   },
-  writeServer (name: string, data: unknown): void {
-    write('server', { name, data })
-  }
-} as const
+  writeUpstream(
+    name: string,
+    data: unknown,
+    state: States = states.PLAY,
+  ): void {
+    write('upstream', { name, data, state });
+  },
+} as const;
 
-channel.subscribe(({ side, packet: raw }: Message) => {
+channel.subscribe(({ direction, packet: raw }: Message) => {
   void (async () => {
-    const emitter = proxy[side]
+    const sourceHandler = {
+      downstream: proxy.server,
+      upstream: proxy.client,
+    }[direction];
 
-    const packet = new Packet(raw.name, raw.data)
+    const packet = new Packet(raw.name, raw.data);
 
-    await emitter.emit('packet', packet)
-    await emitter.emit(packet.name, packet)
+    await sourceHandler.emit('packet', packet);
+    await sourceHandler.emit(packet.name, packet);
 
-    if (packet.canceled) return
+    if (packet.canceled) return;
 
-    switch (side) {
-      case 'client':
-        side = 'server'
-        break
-      case 'server':
-        side = 'client'
-        break
+    switch (direction) {
+      case 'downstream':
+        direction = 'upstream';
+        break;
+      case 'upstream':
+        direction = 'downstream';
+        break;
       default:
-        throw new Error(`Invalid side: ${side as any}`)
+        throw new Error(`Invalid direction: ${direction as any}`);
     }
 
+    // Forward packet
     channel.write({
-      side,
-      packet
-    })
-  })()
-})
+      direction,
+      packet,
+    });
+  })();
+});
 
-export default proxy
+export default proxy;

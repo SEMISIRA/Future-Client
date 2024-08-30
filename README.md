@@ -1,4 +1,5 @@
 # MMP
+
 - Modular Minecraft Proxy
 
 # How does this differ from other proxies (such as SMP)?
@@ -13,7 +14,7 @@ No more cleint, sever or posiotin!
 
 For every client that connects a new thread is created.
 
-While also offering minimal performance gains (as there probably isn't (and shouldn't) be  ever more then one client) makes it so that program instances client-based instead of being shared between all clients.
+While also offering minimal performance gains (as there probably isn't (and shouldn't) be ever more then one client) makes it so that program instances client-based instead of being shared between all clients.
 
 This makes a Singleton-like architecture possible without needing to worry about multiple instances of the same plugin and explicit declaration of dependencies.
 

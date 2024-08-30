@@ -1,122 +1,125 @@
-import type Instance from '../../instance/index.js'
-import { type Message } from './shared.js'
-import { type RawPacket } from '../../util/packet.js'
-import { states } from 'minecraft-protocol'
+import { states } from 'minecraft-protocol';
+
+import type Instance from '../../instance/index.js';
+import { type RawPacket } from '../../util/packet.js';
+import { type Message } from './shared.js';
 
 export default async function (instance: Instance): Promise<void> {
-  const clientQueue: RawPacket[] = []
-  const serverQueue: RawPacket[] = []
+  const clientQueue: RawPacket[] = [];
+  const serverQueue: RawPacket[] = [];
 
-  const channel = instance.createChannel<Message>('proxy')
+  const channel = instance.createChannel<Message>('proxy');
 
-  const client = instance.client
-  const server = instance.server
-  const worker = instance.worker
+  const client = instance.client;
+  const server = instance.server;
+  const worker = instance.worker;
 
-  client.on('end', reason => {
-    console.info('Client disconnected:', reason)
+  client.on('end', (reason) => {
+    console.info('Client disconnected:', reason);
 
-    server.end(reason)
+    server.end(reason);
 
-    void worker.terminate()
-  })
+    void worker.terminate();
+  });
 
-  server.on('end', reason => {
-    console.info('Target disconnected:', reason)
+  server.on('end', (reason) => {
+    console.info('Server disconnected:', reason);
 
-    client.end(reason)
+    client.end(reason);
 
-    void worker.terminate()
-  })
+    void worker.terminate();
+  });
 
-  client.on('error', error => {
-    console.error('Client error:', error)
-  })
+  client.on('error', (error) => {
+    console.error('Client error:', error);
+  });
 
-  server.on('error', error => {
-    console.error('Target error:', error)
-  })
+  server.on('error', (error) => {
+    console.error('Server error:', error);
+  });
 
   client.on('packet', (data, meta) => {
-    if (meta.state !== states.PLAY) return
+    // if (meta.state !== states.PLAY) return;
 
     channel.write({
-      side: 'client',
+      direction: 'downstream',
       packet: {
-        name: meta.name,
-        data
-      }
-    })
-  })
+        ...meta,
+        data,
+      },
+    });
+  });
 
   server.on('packet', (data, meta) => {
-    if (meta.state !== states.PLAY) return
+    // if (meta.state !== states.PLAY) return;
 
     channel.write({
-      side: 'server',
+      direction: 'upstream',
       packet: {
-        name: meta.name,
-        data
-      }
-    })
-  })
+        ...meta,
+        data,
+      },
+    });
+  });
 
-  client.on('state', state => {
-    if (state !== states.PLAY) return
+  // Flush packet queue on play state
 
-    const queue = clientQueue
+  client.on('state', (state) => {
+    if (state !== states.PLAY) return;
 
-    for (const packet of queue) client.write(packet.name, packet.data)
+    const queue = clientQueue;
 
-    queue.length = 0
-  })
+    for (const packet of queue) client.write(packet.name, packet.data);
 
-  server.on('state', state => {
-    if (state !== states.PLAY) return
+    queue.length = 0;
+  });
 
-    const queue = serverQueue
+  server.on('state', (state) => {
+    if (state !== states.PLAY) return;
 
-    for (const packet of queue) server.write(packet.name, packet.data)
+    const queue = serverQueue;
 
-    queue.length = 0
-  })
+    for (const packet of queue) server.write(packet.name, packet.data);
 
-  channel.subscribe(({ side, packet }) => {
+    queue.length = 0;
+  });
+
+  channel.subscribe(({ direction: side, packet }) => {
     switch (side) {
-      case 'client':
-        writeClientPacket(packet)
-        break
-      case 'server':
-        writeServerPacket(packet)
-        break
+      case 'downstream':
+        writeClientPacket(packet);
+        break;
+      case 'upstream':
+        writeServerPacket(packet);
+        break;
       default:
-        throw new Error(`Invalid side: ${side as any}`)
+        throw new Error(`Invalid side: ${side as any}`);
     }
-  })
+  });
 
-  function writeClientPacket (packet: RawPacket): void {
+  function writeClientPacket(packet: RawPacket): void {
+    // wait until play state
     if (client.state !== states.PLAY) {
-      clientQueue.push(packet)
+      clientQueue.push(packet);
 
-      return
+      return;
     }
 
-    client.write(
-      packet.name,
-      packet.data
-    )
+    if (packet.state !== states.PLAY) return;
+
+    client.write(packet.name, packet.data);
   }
 
-  function writeServerPacket (packet: RawPacket): void {
+  function writeServerPacket(packet: RawPacket): void {
+    // wait until play state
     if (server.state !== states.PLAY) {
-      serverQueue.push(packet)
+      serverQueue.push(packet);
 
-      return
+      return;
     }
 
-    server.write(
-      packet.name,
-      packet.data
-    )
+    if (packet.state !== states.PLAY) return;
+
+    server.write(packet.name, packet.data);
   }
 }

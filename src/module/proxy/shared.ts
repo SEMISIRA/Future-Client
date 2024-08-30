@@ -1,8 +1,8 @@
-import { type RawPacket } from '../../util/packet.js'
+import { type RawPacket } from '../../util/packet.js';
 
-export type Side = 'client' | 'server'
+export type Direction = 'upstream' | 'downstream';
 
 export interface Message {
-  side: Side
-  packet: RawPacket
+  direction: Direction;
+  packet: RawPacket;
 }
