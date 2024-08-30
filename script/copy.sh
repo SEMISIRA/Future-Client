@@ -1,20 +1,11 @@
 #!/usr/bin/env bash
 
-SOURCE=$1
+SOURCE="$1"
 
-if [ -z "$SOURCE" ]
-then
-  SOURCE="src"
-fi
+: ${SOURCE:=src}
 
-# length of "src/" = 4
-TARGET="${SOURCE:4}"
+TARGET="$2"
 
-if [ -z "$TARGET" ]
-then
-  TARGET="."
-fi
-
-TARGET="dist/$TARGET"
+: ${TARGET:=dist}
 
 rsync -rav --exclude="*.ts" $SOURCE/ $TARGET/
