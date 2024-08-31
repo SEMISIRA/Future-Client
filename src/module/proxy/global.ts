@@ -5,8 +5,8 @@ import { type RawPacket } from '../../util/packet.js';
 import { type Message } from './shared.js';
 
 export default async function (instance: Instance): Promise<void> {
-  const clientQueue: RawPacket[] = [];
-  const serverQueue: RawPacket[] = [];
+  const downstreamQueue: RawPacket[] = [];
+  const upstreamQueue: RawPacket[] = [];
 
   const channel = instance.createChannel<Message>('proxy');
 
@@ -39,10 +39,8 @@ export default async function (instance: Instance): Promise<void> {
   });
 
   client.on('packet', (data, meta) => {
-    // if (meta.state !== states.PLAY) return;
-
     channel.write({
-      direction: 'downstream',
+      direction: 'upstream',
       packet: {
         ...meta,
         data,
@@ -51,10 +49,8 @@ export default async function (instance: Instance): Promise<void> {
   });
 
   server.on('packet', (data, meta) => {
-    // if (meta.state !== states.PLAY) return;
-
     channel.write({
-      direction: 'upstream',
+      direction: 'downstream',
       packet: {
         ...meta,
         data,
@@ -67,40 +63,36 @@ export default async function (instance: Instance): Promise<void> {
   client.on('state', (state) => {
     if (state !== states.PLAY) return;
 
-    const queue = clientQueue;
+    for (const packet of downstreamQueue) writeDownstreamPacket(packet);
 
-    for (const packet of queue) client.write(packet.name, packet.data);
-
-    queue.length = 0;
+    downstreamQueue.length = 0;
   });
 
   server.on('state', (state) => {
     if (state !== states.PLAY) return;
 
-    const queue = serverQueue;
+    for (const packet of upstreamQueue) writeUpstreamPacket(packet);
 
-    for (const packet of queue) server.write(packet.name, packet.data);
-
-    queue.length = 0;
+    upstreamQueue.length = 0;
   });
 
-  channel.subscribe(({ direction: side, packet }) => {
-    switch (side) {
+  channel.subscribe(({ direction: direction, packet }) => {
+    switch (direction) {
       case 'downstream':
-        writeClientPacket(packet);
+        writeDownstreamPacket(packet);
         break;
       case 'upstream':
-        writeServerPacket(packet);
+        writeUpstreamPacket(packet);
         break;
       default:
-        throw new Error(`Invalid side: ${side as any}`);
+        throw new Error(`Unknown direction: ${direction as any}`);
     }
   });
 
-  function writeClientPacket(packet: RawPacket): void {
-    // wait until play state
+  function writeDownstreamPacket(packet: RawPacket): void {
+    // queue until play state
     if (client.state !== states.PLAY) {
-      clientQueue.push(packet);
+      downstreamQueue.push(packet);
 
       return;
     }
@@ -110,10 +102,10 @@ export default async function (instance: Instance): Promise<void> {
     client.write(packet.name, packet.data);
   }
 
-  function writeServerPacket(packet: RawPacket): void {
-    // wait until play state
+  function writeUpstreamPacket(packet: RawPacket): void {
+    // queue until play state
     if (server.state !== states.PLAY) {
-      serverQueue.push(packet);
+      upstreamQueue.push(packet);
 
       return;
     }

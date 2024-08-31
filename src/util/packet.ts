@@ -6,14 +6,11 @@ export interface RawPacket extends PacketMeta {
 }
 
 export class Packet<Data = unknown> {
-  public name;
-  public state: States = states.PLAY;
-  public data;
-
   public canceled: boolean = false;
 
-  constructor(name: string, data: Data) {
-    this.name = name;
-    this.data = data;
-  }
+  constructor(
+    public name: string,
+    public data: Data,
+    public state: States = states.PLAY,
+  ) {}
 }
