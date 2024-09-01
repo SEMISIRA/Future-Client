@@ -1,15 +1,9 @@
 import chalk from 'chalk';
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 
 import { importModules } from '../util/import-modules.js';
 
-if (!('require' in globalThis)) {
-  globalThis.__filename = fileURLToPath(import.meta.url);
-  globalThis.__dirname = dirname(__filename);
-}
-
-const MODULE_DIR_PATH = resolve(__dirname, '../module');
+const MODULES_DIR_PATH = resolve(import.meta.dirname, '../modules');
 
 console.group('Loading modules... (local)');
 
@@ -17,7 +11,7 @@ const start = performance.now();
 
 let moduleStart = NaN;
 
-await importModules(MODULE_DIR_PATH, 'local.js', {
+await importModules(MODULES_DIR_PATH, 'local.js', {
   pre(entry) {
     const module = entry.name;
     console.group(`Loading ${module}...`);

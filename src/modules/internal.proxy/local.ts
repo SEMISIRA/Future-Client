@@ -7,8 +7,7 @@ import { type Direction as Direction, type Message } from './shared.js';
 
 export type PacketEventMap = Record<string, (packet: Packet) => AsyncVoid>;
 
-// ? Should I export the channel
-export const channel = createChannel<Message>('proxy');
+const channel = createChannel<Message>('internal.proxy');
 
 function write(direction: Direction, packet: RawPacket): void {
   channel.write({

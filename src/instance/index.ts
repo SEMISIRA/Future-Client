@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { createClient, type ServerClient } from 'minecraft-protocol';
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { Worker } from 'worker_threads';
 
 import { TARGET_OPTIONS } from '../settings.js';
@@ -9,13 +8,8 @@ import { Channel } from '../util/channel.js';
 import { importModulesGenerator } from '../util/import-modules.js';
 import { type Message } from '../worker/parent.js';
 
-if (!('require' in globalThis)) {
-  globalThis.__filename = fileURLToPath(import.meta.url);
-  globalThis.__dirname = dirname(__filename);
-}
-
-const WORKER_PATH = resolve(__dirname, '../worker');
-const MODULE_DIR_PATH = resolve(__dirname, '../module');
+const WORKER_PATH = resolve(import.meta.dirname, '../worker');
+const MODULES_DIR_PATH = resolve(import.meta.dirname, '../modules');
 
 export class Instance {
   public readonly client;
@@ -68,7 +62,7 @@ export class Instance {
     let moduleStart = NaN;
 
     for await (const module of importModulesGenerator(
-      MODULE_DIR_PATH,
+      MODULES_DIR_PATH,
       'global.js',
       {
         pre(entry) {

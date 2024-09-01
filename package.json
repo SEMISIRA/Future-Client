@@ -23,7 +23,13 @@
     }
   },
   "dependencies": {
-    "minecraft-protocol": "^1.47.0"
+    "@types/text-table": "^0.2.5",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "minecraft-protocol": "^1.47.0",
+    "strip-ansi": "^7.1.0",
+    "text-table": "^0.2.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
@@ -40,5 +46,8 @@
     "scripty": "^2.1.1",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.3.0"
+  },
+  "bin": {
+    "m3": "./dist/m3/bin.js"
   }
 }

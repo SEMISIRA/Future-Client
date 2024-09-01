@@ -1,0 +1,7 @@
+*
+!.gitignore
+
+# for whatever reason, you need to unignore
+# the directories AND files within them
+!internal.*
+!internal.*/**

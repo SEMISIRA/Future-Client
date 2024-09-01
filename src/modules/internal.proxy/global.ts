@@ -8,7 +8,7 @@ export default async function (instance: Instance): Promise<void> {
   const downstreamQueue: RawPacket[] = [];
   const upstreamQueue: RawPacket[] = [];
 
-  const channel = instance.createChannel<Message>('proxy');
+  const channel = instance.createChannel<Message>('internal.proxy');
 
   const client = instance.client;
   const server = instance.server;
